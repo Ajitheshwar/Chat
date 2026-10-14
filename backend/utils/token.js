@@ -1,5 +1,14 @@
 import jwt from "jsonwebtoken";
 
+const getCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "None" : "Lax",
+  };
+};
+
 export const issueToken = (user) => {
   console.log("Issuing token for user:", user.username);
   return jwt.sign(
@@ -27,12 +36,6 @@ export const verifyRefreshToken = (token) => {
 };
 
 export const setAuthCookie = (res, token, refreshToken) => {
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-  });
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-  });
+  res.cookie("token", token, getCookieOptions());
+  res.cookie("refreshToken", refreshToken, getCookieOptions());
 };

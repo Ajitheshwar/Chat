@@ -23,7 +23,7 @@ const LoginPage = () => {
 
     try {
       await loginUser(form);
-      navigate("/", { replace: true });
+      navigate("/chat", { replace: true });
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {

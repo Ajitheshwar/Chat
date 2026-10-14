@@ -5,7 +5,7 @@ import {
   getMe,
   logout,
   refreshToken,
-} from "../controllers/auth.controllers.js";
+} from "../controllers/auth.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import { loginSchema, registerSchema } from "../validation/auth.schema.js";

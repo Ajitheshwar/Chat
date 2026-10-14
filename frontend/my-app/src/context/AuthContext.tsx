@@ -5,9 +5,10 @@ export const AuthContext = createContext<any>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    setLoading(true);
     getMe()
       .then((response) => {
         setUser(response.data.user);
@@ -15,6 +16,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .catch((error) => {
         setUser(null);
         console.error("Error fetching user:", error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
 

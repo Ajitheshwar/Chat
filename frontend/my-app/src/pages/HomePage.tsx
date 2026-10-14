@@ -1,9 +1,6 @@
 import { useContext } from "react";
-import { Link, Route, Routes } from "react-router-dom";
-import LoginPage from "./LoginPage";
-import RegisterPage from "./RegisterPage";
+import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import Layout from "../components/Layout";
 
 const LandingPage = () => {
   return (
@@ -47,41 +44,25 @@ const LandingPage = () => {
   );
 };
 
-const DashboardPage = ({ username }: { username: string }) => (
-  <section className="dashboard-card">
-    <p className="eyebrow">Your space</p>
-    <h1>Welcome back, {username}</h1>
-    <p className="hero-text">
-      You’re signed in and ready to catch up with your conversations.
-    </p>
-    <div className="dashboard-status">
-      <span className="dot green" />
-      <span>You’re all set to chat</span>
-    </div>
-  </section>
-);
+const DashboarPage = ({ username }: { username: string }) => {
+  return (
+    <section className="dashboard-card">
+      <p className="eyebrow">Your space</p>
+      <h1>Welcome back, {username}</h1>
+      <p className="hero-text">
+        You’re signed in and ready to catch up with your conversations.
+      </p>
+      <div className="dashboard-status">
+        <span className="dot green" />
+        <span>You’re all set to chat</span>
+      </div>
+    </section>
+  );
+};
 
 const HomePage = () => {
   const { user } = useContext(AuthContext);
-
-  return (
-    <Layout>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            user ? (
-              <DashboardPage username={user.username} />
-            ) : (
-              <LandingPage />
-            )
-          }
-        />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-      </Routes>
-    </Layout>
-  );
+  return user ? <DashboarPage username={user.username} /> : <LandingPage />;
 };
 
 export default HomePage;

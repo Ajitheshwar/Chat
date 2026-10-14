@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/apiError.js";
 import {
   issueToken,
   issueRefreshToken,
@@ -9,15 +10,12 @@ import {
 export const register = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
   if ((!username, !email, !password)) {
-    return res.status(400).json({ message: "All fields are required" });
+    throw new ApiError(400, "All fields are required");
   }
-  const existinUserEmail = await User.findOne({ email });
-  if (existinUserEmail) {
-    return res.status(400).json({ message: "User already exists" });
-  }
-  const existingUserName = await User.findOne({ username });
-  if (existingUserName) {
-    return res.status(400).json({ message: "Username already exists" });
+  const existing = await User.findOne({ $or: [{ email }, { username }] });
+  if (existing) {
+    const field = existing.email === email ? "email" : "username";
+    throw new ApiError(400, `User with that ${field} already exists`);
   }
   const newUser = new User({ username, email, password });
   await newUser.save();
@@ -27,15 +25,15 @@ export const register = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
-    return res.status(400).json({ message: "All fields are required" });
+    throw new ApiError(400, "All fields are required");
   }
   const user = await User.findOne({ username }).select("+password");
   if (!user) {
-    return res.status(400).json({ message: "User not found" });
+    throw new ApiError(400, "User not found");
   }
   const isPasswordValid = await user.comparePassword(password);
   if (!isPasswordValid) {
-    return res.status(400).json({ message: "Invalid password" });
+    throw new ApiError(400, "Invalid password");
   }
   const token = issueToken(user);
   const refreshToken = issueRefreshToken(user);
@@ -48,7 +46,7 @@ export const login = asyncHandler(async (req, res) => {
 
 export const getMe = asyncHandler(async (req, res) => {
   if (!req.user) {
-    return res.status(400).json({ message: "User not found" });
+    throw new ApiError(401, "User not found");
   }
   return res.status(200).json({ user: req.user.toPublicUser() });
 });
@@ -62,14 +60,14 @@ export const logout = asyncHandler(async (req, res) => {
 export const refreshToken = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) {
-    return res.status(401).json({ message: "Unauthorized" });
+    throw new ApiError(401, "Unauthorized");
   }
 
   try {
     const decoded = verifyRefreshToken(refreshToken);
     const user = await User.findById(decoded.id);
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized" });
+      throw new ApiError(401, "Unauthorized");
     }
     const newToken = issueToken(user);
     const newRefreshToken = issueRefreshToken(user);
