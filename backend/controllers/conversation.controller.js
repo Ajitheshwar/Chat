@@ -12,7 +12,7 @@ export const createConversation = asyncHandler(async (req, res) => {
     throw new ApiError(400, "A valid userId is required");
   }
 
-  if ((userId = me.toString())) {
+  if (userId == me.toString()) {
     throw new ApiError(400, "You cannot create a conversation with yourself");
   }
 
@@ -31,6 +31,7 @@ export const createConversation = asyncHandler(async (req, res) => {
   const created = await Conversation.create({
     isGroup: false,
     participants: [me, other.id],
+    lastMessage: null,
   });
 
   const conversation = await created.populate(
@@ -46,6 +47,7 @@ export const getConversations = asyncHandler(async (req, res) => {
 
   const conversations = await Conversation.find({ participants: me })
     .populate("participants", "username lastSeen")
+    .populate("lastMessage")
     .sort({ updateAt: -1 })
     .lean();
 
