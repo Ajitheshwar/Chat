@@ -1,13 +1,7 @@
 import { ArrowLeft, Send } from "lucide-react";
-import {
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
+import { useContext, useEffect, useRef, useState, type FormEvent } from "react";
 import type { Socket } from "socket.io-client";
-import { getMessages, sendMessage } from "../../apis/chat";
+import { getConversation, getMessages, sendMessage } from "../../apis/chat";
 import { getErrorMessage } from "../../apis/client";
 import { AuthContext } from "../../context/AuthContext";
 import { SocketContext } from "../../context/SocketContext";
@@ -16,14 +10,16 @@ import MessageBubble from "./MessageBubble";
 import type { ChatMessage, ChatUser, Conversation } from "./types";
 
 interface ChatWindowProps {
-  conversation: Conversation | null;
-  onBack: () => void;
+  conversationId?: string;
 }
 
-const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
+const ChatWindow = ({ conversationId }: ChatWindowProps) => {
   const { user } = useContext(AuthContext) as { user: ChatUser | null };
   const { socket } = useContext(SocketContext) as { socket: Socket | null };
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [hasMore, setHasMore] = useState<boolean>(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [conversation, setConversation] = useState<Conversation | null>(null);
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -31,43 +27,46 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!conversation) {
-      setMessages([]);
-      setError("");
+    setMessages([]);
+    setHasMore(false);
+    setConversation(null);
+    setError("");
+    setNextCursor(null);
+    if (!conversationId) {
       return;
     }
 
-    let active = true;
-    setLoading(true);
-    setError("");
-    setMessages([]);
+    getConversation(conversationId).then((res) => {
+      setConversation(res.data.conversation);
+    });
+    loadMessages();
 
-    getMessages(conversation._id)
+    return () => {};
+  }, [conversationId]);
+
+  const loadMessages = () => {
+    if (!conversationId) return;
+    setLoading(true);
+    getMessages(conversationId, { before: nextCursor ?? null })
       .then((response) => {
-        if (active) setMessages(response.data.messages ?? []);
+        combineMessages(response.data.messages, messages);
+        setHasMore(response.data.hasMore);
+        setNextCursor(response.data.nextCursor);
       })
       .catch((requestError: unknown) => {
-        if (active) setError(getErrorMessage(requestError));
+        setError(getErrorMessage(requestError));
       })
       .finally(() => {
-        if (active) setLoading(false);
+        setLoading(false);
       });
-
-    return () => {
-      active = false;
-    };
-  }, [conversation]);
+  };
 
   useEffect(() => {
     if (!conversation || !socket) return;
 
     const handleNewMessage = (message: ChatMessage) => {
       if (message.conversationId === conversation._id) {
-        setMessages((current) =>
-          current.some((existing) => existing._id === message._id)
-            ? current
-            : [...current, message],
-        );
+        combineMessages(messages, [message]);
       }
     };
 
@@ -86,9 +85,15 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     };
   }, [conversation, socket]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  const combineMessages = (listOne: ChatMessage[], listTwo: ChatMessage[]) => {
+    const messages = [...listOne];
+    listTwo.forEach((message) => {
+      if (!listOne.some((msg) => msg._id == message._id)) {
+        messages.push(message);
+      }
+    });
+    setMessages(messages);
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -100,11 +105,7 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
     try {
       const response = await sendMessage(conversation._id, text);
       const message: ChatMessage = response.data.message;
-      setMessages((current) =>
-        current.some((existing) => existing._id === message._id)
-          ? current
-          : [...current, message],
-      );
+      combineMessages(messages, [message]);
       setDraft("");
     } catch (requestError) {
       setError(getErrorMessage(requestError));
@@ -134,7 +135,6 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
         <button
           className="mobile-back-button"
           type="button"
-          onClick={onBack}
           aria-label="Go back"
         >
           <ArrowLeft size={20} />
@@ -162,13 +162,23 @@ const ChatWindow = ({ conversation, onBack }: ChatWindowProps) => {
             <span>Say hello to start the conversation.</span>
           </div>
         ) : (
-          messages.map((message) => (
-            <MessageBubble
-              key={message._id}
-              message={message}
-              isOwnMessage={message.sender._id === user?._id}
-            />
-          ))
+          <>
+            {hasMore && (
+              <button
+                className="chat-load-more"
+                type="button"
+                onClick={loadMessages}
+              >
+                Load more
+              </button>
+            )}
+            {messages.map((message) => (
+              <MessageBubble
+                message={message}
+                isOwnMessage={message.sender._id === user?._id}
+              />
+            ))}
+          </>
         )}
         <div ref={messagesEndRef} />
       </section>

@@ -20,7 +20,7 @@ const App = () => {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route
-                path="/chat"
+                path="/chat/:conversationId?"
                 element={
                   <ProtectedRoute>
                     <ChatPage />

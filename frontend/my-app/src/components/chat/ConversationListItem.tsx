@@ -1,19 +1,18 @@
 import { MessageCircle } from "lucide-react";
 import { getConversationName } from "../../utils/conversation.util";
 import type { ChatUser, Conversation } from "./types";
+import { Link } from "react-router-dom";
 
 interface ConversationListItemProps {
   conversation: Conversation;
   currentUser: ChatUser | null;
   isSelected: boolean;
-  onSelect: (conversation: Conversation) => void;
 }
 
 const ConversationListItem = ({
   conversation,
   currentUser,
   isSelected,
-  onSelect,
 }: ConversationListItemProps) => {
   const name = getConversationName(conversation, currentUser);
   const initials = name
@@ -24,10 +23,9 @@ const ConversationListItem = ({
     .toUpperCase();
 
   return (
-    <button
+    <Link
+      to={`/chat/${conversation._id}`}
       className={`conversation-item${isSelected ? " is-selected" : ""}`}
-      type="button"
-      onClick={() => onSelect(conversation)}
       aria-current={isSelected ? "true" : undefined}
     >
       <span className="conversation-avatar" aria-hidden="true">
@@ -49,7 +47,7 @@ const ConversationListItem = ({
           {conversation.lastMessage?.text ?? "Start a conversation"}
         </span>
       </span>
-    </button>
+    </Link>
   );
 };
 

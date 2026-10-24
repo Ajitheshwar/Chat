@@ -3,6 +3,7 @@ import Conversation from "../models/conversation.model.js";
 import User from "../models/user.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
+import { findConversationForUser } from "../utils/conversationAccess.js";
 
 export const createConversation = asyncHandler(async (req, res) => {
   const { userId } = req.body;
@@ -52,4 +53,12 @@ export const getConversations = asyncHandler(async (req, res) => {
     .lean();
 
   res.status(200).json({ conversations });
+});
+
+export const getConversation = asyncHandler(async (req, res) => {
+  const me = req.user.id;
+  const conversationId = req.params.conversationId;
+
+  const conversation = await findConversationForUser(conversationId, me);
+  res.status(200).json({ conversation });
 });

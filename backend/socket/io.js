@@ -16,7 +16,6 @@ export const initSocket = (httpServer) => {
 
   io.on("connection", (socket) => {
     registerSocketHandlers(io, socket);
-    console.log("A user connected: ", socket.id);
   });
 
   return io;

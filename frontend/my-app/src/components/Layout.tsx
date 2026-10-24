@@ -27,7 +27,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <Link to="/">Home</Link>
           {user ? (
             <>
-              <span className="user-greeting">{user.username}</span>
+              <Link to="/chat">Chat</Link>
               <button
                 className="nav-button"
                 type="button"

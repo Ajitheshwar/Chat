@@ -44,7 +44,10 @@ export const createMessage = asyncHandler(async (req, res) => {
   if (!trimmed) throw new ApiError(400, "Message text is required");
   if (trimmed.length > 2000) throw new ApiError(400, "Message is too long");
 
-  await findConversationForUser(conversationId, req.user.id);
+  const conversation = await findConversationForUser(
+    conversationId,
+    req.user.id,
+  );
 
   const newMessage = await Message.create({
     sender: req.user.id,
@@ -58,5 +61,10 @@ export const createMessage = asyncHandler(async (req, res) => {
 
   const populated = await newMessage.populate("sender", "username");
   getIO().to(`conv:${conversationId}`).emit("message:new", populated);
+  conversation.participants.forEach((userId) => {
+    getIO()
+      .to(`user:${userId}`)
+      .emit("conversation:updated", { conversationId, lastMessage: populated });
+  });
   res.status(201).json({ message: populated });
 });

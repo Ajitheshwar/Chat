@@ -1,8 +1,11 @@
 .chat-page {
   display: grid;
+  box-sizing: border-box;
   grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
   width: min(100%, 1280px);
-  min-height: min(760px, calc(100vh - 150px));
+  height: 100%;
+  min-height: 0;
+  flex: 0 0 auto;
   overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 22px;
@@ -13,7 +16,9 @@
 .conversation-sidebar {
   display: flex;
   min-width: 0;
+  min-height: 0;
   flex-direction: column;
+  overflow: hidden;
   border-right: 1px solid rgba(148, 163, 184, 0.15);
   background: rgba(15, 23, 42, 0.72);
 }
@@ -94,28 +99,34 @@
 }
 
 .conversation-list {
+  min-height: 0;
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0 0.65rem 0.8rem;
 }
 
 .conversation-item {
   display: flex;
+  box-sizing: border-box;
   width: 100%;
   align-items: center;
   gap: 0.8rem;
   padding: 0.85rem 0.75rem;
-  border: 0;
   border-radius: 14px;
   background: transparent;
   color: inherit;
-  text-align: left;
-  cursor: pointer;
+  text-decoration: none;
   transition: background 150ms ease, transform 150ms ease;
 }
 
 .conversation-item:hover {
   background: rgba(148, 163, 184, 0.08);
+}
+
+.conversation-item:focus-visible {
+  outline: 2px solid #34d399;
+  outline-offset: -2px;
 }
 
 .conversation-item:active {
@@ -217,6 +228,7 @@
   min-width: 0;
   min-height: 0;
   flex-direction: column;
+  overflow: hidden;
   background:
     radial-gradient(ellipse at 50% 20%, rgba(16, 185, 129, 0.055), transparent 42%),
     #111c2d;
@@ -224,7 +236,11 @@
 
 .chat-header {
   display: flex;
+  position: sticky;
+  z-index: 1;
+  top: 0;
   min-height: 78px;
+  flex: 0 0 auto;
   align-items: center;
   gap: 0.8rem;
   padding: 0.9rem 1.5rem;
@@ -272,6 +288,7 @@
   flex-direction: column;
   gap: 0.9rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1.5rem clamp(1rem, 4vw, 3rem);
 }
 
@@ -289,6 +306,34 @@
   background: rgba(15, 23, 42, 0.55);
   color: #94a3b8;
   font-size: 0.68rem;
+}
+
+.chat-load-more {
+  align-self: center;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgba(52, 211, 153, 0.28);
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #a7f3d0;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+
+.chat-load-more:hover {
+  transform: translateY(-1px);
+  border-color: rgba(52, 211, 153, 0.5);
+  background: rgba(16, 185, 129, 0.18);
+}
+
+.chat-load-more:focus-visible {
+  outline: 2px solid #34d399;
+  outline-offset: 3px;
 }
 
 .message-row {
@@ -349,6 +394,7 @@
 
 .message-composer {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 0.7rem;
   margin: 0 1.25rem 1.25rem;
@@ -421,6 +467,7 @@
 }
 
 .chat-inline-error {
+  flex: 0 0 auto;
   margin: 0 1.5rem 0.5rem;
   font-size: 0.78rem;
 }
@@ -469,7 +516,6 @@
 @media (max-width: 760px) {
   .chat-page {
     grid-template-columns: minmax(0, 1fr);
-    min-height: calc(100vh - 132px);
     border-radius: 16px;
   }
 

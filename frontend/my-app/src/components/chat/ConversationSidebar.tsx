@@ -6,21 +6,21 @@ import { AuthContext } from "../../context/AuthContext";
 import ConversationListItem from "./ConversationListItem";
 import type { ChatUser, Conversation } from "./types";
 import { getConversationName } from "../../utils/conversation.util";
+import { SocketContext } from "../../context/SocketContext";
 
 interface ConversationSidebarProps {
   selectedConversationId: string | null;
-  onSelect: (conversation: Conversation) => void;
 }
 
 const ConversationSidebar = ({
   selectedConversationId,
-  onSelect,
 }: ConversationSidebarProps) => {
-  const { user } = useContext(AuthContext) as { user: ChatUser | null };
+  const { user } = useContext(AuthContext);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { socket } = useContext(SocketContext);
 
   useEffect(() => {
     let active = true;
@@ -44,6 +44,21 @@ const ConversationSidebar = ({
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    const onUpdated = ({ conversationId, lastMessage }: any) => {
+      setConversations((prev: Conversation[]) => {
+        const i = prev.findIndex((c) => c._id == conversationId);
+        if (i === -1) return prev;
+        const updated: Conversation = { ...prev[i], lastMessage };
+        return [updated, ...prev.filter((c) => c._id !== conversationId)];
+      });
+    };
+
+    socket.on("conversation:updated", onUpdated);
+    return () => socket.off("conversation:updated", onUpdated);
+  }, [socket]);
 
   const filteredConversations = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
@@ -96,7 +111,6 @@ const ConversationSidebar = ({
               conversation={conversation}
               currentUser={user}
               isSelected={conversation._id === selectedConversationId}
-              onSelect={onSelect}
             />
           ))
         )}
